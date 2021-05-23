@@ -91,7 +91,7 @@ const generatePanels = (baseLength, baseWidth, anglesArr, isMeters) => {
   }
 
   console.log("Writing to file...");
-  fs.writeFileSync(__dirname + "DXF.dxf", dxf.toDxfString());
+  fs.writeFileSync(__dirname + "/DXF.dxf", dxf.toDxfString());
 };
 
 // generatePanels(
