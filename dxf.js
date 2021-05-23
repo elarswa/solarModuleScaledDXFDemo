@@ -12,23 +12,20 @@ const apparentLength = (len, angle) => {
 const testModuleLength = 1.686; // meters
 const testModuleWidth = 1.016; // meters
 
-const heightOffsetInches = meterToInches(testModuleLength) + 50;
-const origin = { x: 0, y: 0 };
-const textHeight = meterToInches(0.75);
-const xOffsetText = meterToInches(testModuleLength + 1);
-
-const offsetOrigin = (oldOrigin) => {
-  return {
-    x: oldOrigin.x,
-    y: -1 * (Math.abs(oldOrigin.y) + heightOffsetInches),
-  };
-};
-
 let dxf = new Drawing();
 
 dxf.setUnits("Inches");
 
-const drawPanelsAtAngle = (currentOrigin, angle) => {
+//
+const drawPanelsAtAngle = (currentOrigin, angle, length, width, isMeters) => {
+  if (length < width) {
+    console.log("Length should be greater than Width");
+    return;
+  }
+  const iWidth = isMeters ? meterToInches(width) : width;
+  const iLength = isMeters ? meterToInches(length) : length;
+  const textHeight = 0.4 * iLength;
+  const xOffsetText = iLength * 1.4;
   dxf.drawText(
     currentOrigin.x,
     currentOrigin.y - textHeight,
@@ -41,64 +38,67 @@ const drawPanelsAtAngle = (currentOrigin, angle) => {
     currentOrigin.y - textHeight - 0.5 * textHeight,
     textHeight / 5,
     0,
-    `y of portrait: ${apparentLength(
-      meterToInches(testModuleLength),
-      angle
-    ).toFixed(4)}:`
+    `y portrait: ${apparentLength(iLength, angle).toFixed(4)}:`
   );
   dxf.drawText(
     currentOrigin.x,
-    currentOrigin.y - textHeight - textHeight,
+    currentOrigin.y - textHeight * 2,
     textHeight / 5,
     0,
-    `y or landscape: ${apparentLength(
-      meterToInches(testModuleWidth),
-      angle
-    ).toFixed(4)}:`
+    `y landscape: ${apparentLength(iWidth, angle).toFixed(4)}:`
   );
   // portrait
   dxf.drawRect(
     currentOrigin.x + xOffsetText,
     currentOrigin.y,
-    currentOrigin.x + xOffsetText + meterToInches(testModuleWidth),
-    currentOrigin.y +
-      apparentLength(meterToInches(testModuleLength) * -1, angle)
+    currentOrigin.x + xOffsetText + iWidth,
+    currentOrigin.y + apparentLength(iLength * -1, angle)
   );
+  //landscape
   dxf.drawRect(
-    currentOrigin.x + xOffsetText + meterToInches(testModuleWidth) + 10,
+    currentOrigin.x + xOffsetText + iWidth + 0.2 * iWidth,
     currentOrigin.y,
-    currentOrigin.x +
-      xOffsetText +
-      meterToInches(testModuleLength) +
-      meterToInches(testModuleWidth) +
-      10,
-    currentOrigin.y + apparentLength(meterToInches(testModuleWidth) * -1, angle)
+    currentOrigin.x + xOffsetText + iLength + iWidth + 0.2 * iWidth,
+    currentOrigin.y + apparentLength(iWidth * -1, angle)
   );
 };
 
-// drawPanelsAtAngle(origin, 0);
-// let newOrigin = offsetOrigin(origin);
-// drawPanelsAtAngle(newOrigin, 25);
-// newOrigin = offsetOrigin(newOrigin);
-// drawPanelsAtAngle(newOrigin, 35);
+// shift origin down by  height offset
+const offsetOrigin = (oldOrigin, isMeters, baseLength) => {
+  let heightOffset = isMeters ? meterToInches(baseLength) : baseLength;
+  heightOffset *= 1.2;
+  return {
+    x: oldOrigin.x,
+    y: -1 * (Math.abs(oldOrigin.y) + heightOffset),
+  };
+};
 
 /**
- *
+ * @param {number} baseLength module actual length
+ * @param {number} baseWidth module actual width
  * @param {Array<number>} anglesArr
+ * @param {boolean} isMeters base inputs are in meters
+ * output sizes are always in inches no matter the input
  * @returns void (writes to file if success)
  */
-const generatePanels = (anglesArr) => {
+const generatePanels = (baseLength, baseWidth, anglesArr, isMeters) => {
   if (anglesArr.length < 1) return;
-  else {
-    let origin = { x: 0, y: 0 };
-    for (const num of anglesArr) {
-      drawPanelsAtAngle(origin, num);
-      origin = offsetOrigin(origin);
-    }
+
+  let origin = { x: 0, y: 0 };
+  for (const angle of anglesArr) {
+    drawPanelsAtAngle(origin, angle, baseLength, baseWidth, isMeters);
+    origin = offsetOrigin(origin, isMeters, baseLength);
   }
 
   console.log("Writing to file...");
   fs.writeFileSync(__dirname + "DXF.dxf", dxf.toDxfString());
 };
 
-generatePanels([0, 10, 15, 20, 35, 40, 45]);
+// generatePanels(
+//   testModuleLength,
+//   testModuleWidth,
+//   [0, 10, 15, 20, 35, 40, 45],
+//   true
+// );
+
+generatePanels(40, 30, [0, 15, 16, 27, 38], false);
