@@ -1,4 +1,5 @@
 # solarModuleScaledDXFDemo
+
 Demo for using dxf-writer for printing a dxf file with panels scaled by roof pitch
 
 Many Solar companies use AutoCad as their tool for drawing solar layouts on homes.
@@ -7,5 +8,7 @@ Given the module base dimensions and desired angles, this will generate a dxf fi
 Users can then copy or import the modules into their cad projects.
 
 # Installation
+
 run `npm i`
+
 run with node
